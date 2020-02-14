@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Clg app</title>
+	<link rel = "stylesheet" href = "styles.css">
+</head>
+<body>
+	<div>
+            <p>User id</p><br>
+            <input type = "number" name = "id" required><br>            
+            <button>login</button>
+    </div>
+    <display>
+    </display>
+    <script>
+    	
+    	var loginBtn = document.querySelector('button');
+    	var divBlock = document.querySelector('div');
+    	var disp = document.querySelector('display');
+    	var url = 'http://localhost:8080/RestClg';
+    	
+    	var pid = -1,cid = -1,sid = -1;
+    	
+    	loginBtn.onclick = function(){
+    		login();    		
+    	}
+    	
+    	
+    	function login(){
+    		let id = document.querySelector('input').value;
+    		var request = new XMLHttpRequest();
+    		
+    		if(id == 12){
+    			
+    			divBlock.innerHTML = '';
+    			let label = document.createElement('P');
+    			let text = document.createTextNode('Password');
+    			label.appendChild(text);
+    			divBlock.appendChild(label);
+    			
+    			label = document.createElement('INPUT');
+    			label.setAttribute('type','password');
+    			divBlock.appendChild(label);
+    			
+    			label = document.createElement('BUTTON');
+    			text = document.createTextNode('Go');
+    			label.appendChild(text);
+    			divBlock.appendChild(label);
+    			
+    			let btn = document.querySelector('button');
+    			btn.onclick = function(){
+    				
+    				let pass = document.querySelector('input').value;
+    				request.open('GET',url + '/verify/' + pass);
+    				
+    				request.onload = function(){
+    					
+    					divBlock.innerHTML = '';
+    					let menu = JSON.parse(request.response);
+    					
+    					createButtons(menu);
+    					addBtnFunctions(menu);
+    				}
+    				request.send();
+    			}
+    			
+    		}else{
+	    		request.open('GET',url + '/verify/' + id);
+	    		request.onload = function(){
+	    			divBlock.innerHTML = '';
+	    			
+	    			let menu = JSON.parse(request.response);
+	    			if(typeof menu.userType !== 'undefined'){
+	    				label = document.createElement('P');
+	        			text = document.createTextNode('Invalid id');
+	        			label.appendChild(text);
+	        			divBlock.appendChild(label);
+	    			}else{
+						createButtons(menu);
+						addBtnFunctions(menu);
+	    			}
+	    		}
+	    		request.send();
+	    		
+	    	}  
+    	}
+    	
+    	
+    	function addBtnFunctions(menu){
+    		let btns = document.querySelectorAll('button');
+    		let iter = 2,btnIter = 0;
+    		
+    		if(typeof menu[1].option !== 'undefined')
+    			iter = 1;
+    		if(typeof menu[0].option !== 'undefined')
+    			iter = 0;
+    		
+			for(;iter < menu.length;iter++){				
+				btnFunction(btns[btnIter++],menu[iter].option);	
+				console.log(menu[iter].option);
+			}
+    	}
+    	
+    	function btnFunction(btn,option){
+    		var request = new XMLHttpRequest();
+    		let node,text;
+    		
+    		if(option === 'view students'){
+	    		btn.onclick = function(){
+	    			request.open('GET',url + '/students');
+	    			request.onload = function(){
+	    				displayStudents(request.response);
+	    			}
+	    			request.send();
+    			}
+    		}
+    		else if(option === 'view staffs'){
+	    		btn.onclick = function(){
+	    			request.open('GET',url + '/staffs');
+	    			request.onload = function(){
+	    				displayStaffs(request.response);
+	    			}
+	    			request.send();
+    			}
+    		}else if(option === 'add student'){
+    			btn.onclick = function(){
+    				request.open('GET',url+'/departments');
+    				request.onload = function(){
+    					
+	    				disp.innerHTML = '';
+	    				let dDiv = document.createElement('DIV');
+	    				
+	    				node = document.createElement('P');
+	    				text = document.createTextNode('name');
+	    				node.appendChild(text);
+	    				dDiv.appendChild(node);
+	    				
+	    				//node = document.createElement('BR');
+	    				//dDiv.appendChild(node);
+	    				
+	    				node = document.createElement('INPUT');
+	    				node.setAttribute('type','text');
+	    				node.setAttribute('id','name');
+	    				dDiv.appendChild(node);
+	    				
+	    				node = document.createElement('BR');
+	    				dDiv.appendChild(node);
+	    				
+	    				node = document.createElement('P');
+	    				text = document.createTextNode('department');
+	    				node.appendChild(text);
+	    				dDiv.appendChild(node);
+	    				
+	    				node = document.createElement('SELECT');
+	    				node.setAttribute('id','department');
+	    				//dDiv.appendChild(node);
+	    				
+	    				let opNode;	    				
+	    				
+	    				var depts = JSON.parse(request.response);
+	    					
+	    				for(let dept of depts){    						
+		    				opNode = document.createElement('OPTION');
+		        			opNode.setAttribute('value',dept.deptId);
+		        			text = document.createTextNode(dept.deptName);
+		        			opNode.appendChild(text);
+		        			node.appendChild(opNode);
+	    					
+	    				}
+	    				dDiv.appendChild(node);
+	    					    				
+	    				node = document.createElement('BR');
+	    				dDiv.appendChild(node);
+	    				
+	    				node = document.createElement('BUTTON');
+	    				node.setAttribute('id','save');
+	    				text = document.createTextNode('Save');
+	    				node.appendChild(text);
+	    				dDiv.appendChild(node);
+	    				
+	    				disp.appendChild(dDiv);
+	    				saveBtn = document.getElementById('save');
+	    				saveBtn.onclick = function(){
+	    					let name = document.getElementById('name').value;
+	    					let deptId = document.getElementById('department').value;
+	    					request.open('POST',url+'/students/'+name+'/'+deptId);
+	    					request.onload = function(){
+	    						disp.innerHTML = 'saved!';
+	    					}
+	    					request.send();
+	    				}
+    				}
+    				request.send();    				
+    				
+    			}
+    		}else if(option === 'add staff'){
+    			btn.onclick = function(){
+    				request.open('GET',url+'/departments');
+    				request.onload = function(){
+    					let anotherReq = new XMLHttpRequest();
+    					anotherReq.open('GET',url + '/courses')
+    					anotherReq.onload = function(){
+    						
+    						disp.innerHTML = '';
+    	    				let dDiv = document.createElement('DIV');
+    	    				
+    	    				node = document.createElement('P');
+    	    				text = document.createTextNode('name');
+    	    				node.appendChild(text);
+    	    				dDiv.appendChild(node);
+    	    				
+    	    				node = document.createElement('INPUT');
+    	    				node.setAttribute('type','text');
+    	    				node.setAttribute('id','name');
+    	    				dDiv.appendChild(node);
+    	    				
+    	    				node = document.createElement('BR');
+    	    				dDiv.appendChild(node);
+    	    				
+    	    				node = document.createElement('P');
+    	    				text = document.createTextNode('department');
+    	    				node.appendChild(text);
+    	    				dDiv.appendChild(node);
+    	    				
+    	    				node = document.createElement('SELECT');
+    	    				node.setAttribute('id','department');
+    	    				
+    	    				let opNode;	    				
+    	    				
+    	    				var depts = JSON.parse(request.response);
+    	    					
+    	    				for(let dept of depts){    						
+    		    				opNode = document.createElement('OPTION');
+    		        			opNode.setAttribute('value',dept.deptId);
+    		        			text = document.createTextNode(dept.deptName);
+    		        			opNode.appendChild(text);
+    		        			node.appendChild(opNode);
+    	    					
+    	    				}
+    	    				dDiv.appendChild(node);
+    	    					    				
+    	    				node = document.createElement('BR');
+    	    				dDiv.appendChild(node);
+    	    				
+    	    				node = document.createElement('P');
+    	    				text = document.createTextNode('Course');
+    	    				node.appendChild(text);
+    	    				dDiv.appendChild(node);
+    	    				
+    	    				node = document.createElement('SELECT');
+    	    				node.setAttribute('id','course');
+    	    				
+    	    				var courses = JSON.parse(anotherReq.response);
+    	    					
+    	    				for(let course of courses){    						
+    		    				opNode = document.createElement('OPTION');
+    		        			opNode.setAttribute('value',course.courseId);
+    		        			text = document.createTextNode(course.courseName);
+    		        			opNode.appendChild(text);
+    		        			node.appendChild(opNode);
+    	    					
+    	    				}
+    	    				dDiv.appendChild(node);
+    	    					    				
+    	    				node = document.createElement('BR');
+    	    				dDiv.appendChild(node);
+    	    				
+    	    				node = document.createElement('BUTTON');
+    	    				node.setAttribute('id','save');
+    	    				text = document.createTextNode('Save');
+    	    				node.appendChild(text);
+    	    				dDiv.appendChild(node);
+    	    				
+    	    				disp.appendChild(dDiv);
+    	    				saveBtn = document.getElementById('save');
+    	    				saveBtn.onclick = function(){
+    	    					let name = document.getElementById('name').value;
+    	    					let deptId = document.getElementById('department').value;
+    	    					let courseId = document.getElementById('course').value;
+    	    					request.open('POST',url+'/staffs/'+name+'/'+deptId+'/'+courseId);
+    	    					request.onload = function(){
+    	    						disp.innerHTML = 'saved!';
+    	    					}
+    	    					request.send();
+    	    				}
+    					}
+    					anotherReq.send();
+    				}
+    				request.send();
+    				
+    			}
+    		}else if(option === 'add department'){
+    			btn.onclick = function(){
+    				disp.innerHTML = '';
+    				let div = document.createElement('DIV');
+    				node = document.createElement('P');
+    				text = document.createTextNode('Department');
+    				node.appendChild(text);
+    				div.appendChild(node);
+    				
+    				node = document.createElement('INPUT');
+    				node.setAttribute('type','text');
+    				node.setAttribute('id','deptName');
+    				div.appendChild(node);
+    				
+    				node = document.createElement('BR');
+    				div.appendChild(node);
+    				
+    				node = document.createElement('BUTTON');
+    				node.setAttribute('id','save');
+    				text = document.createTextNode('Save');
+    				node.appendChild(text);
+    				div.appendChild(node);
+    				
+    				disp.appendChild(div);
+    				saveBtn = document.getElementById('save');
+    				saveBtn.onclick = function(){
+    					let name = document.getElementById('deptName').value;
+    					request.open('POST',url+'/departments/'+name);
+    					request.onload = function(){
+    						disp.innerHTML = 'saved!';
+    					}
+    					request.send();
+    				}
+    			}
+    		}else if(option === 'add course'){
+    			btn.onclick = function(){
+    				disp.innerHTML = '';
+    				let div = document.createElement('DIV');
+    				node = document.createElement('P');
+    				text = document.createTextNode('Course name');
+    				node.appendChild(text);
+    				div.appendChild(node);
+    				
+    				node = document.createElement('INPUT');
+    				node.setAttribute('type','text');
+    				node.setAttribute('id','cName');
+    				div.appendChild(node);
+    				
+    				node = document.createElement('BR');
+    				div.appendChild(node);
+    				
+    				node = document.createElement('P');
+    				text = document.createTextNode('Course Fee');
+    				node.appendChild(text);
+    				div.appendChild(node);
+    				
+    				node = document.createElement('INPUT');
+    				node.setAttribute('type','number');
+    				node.setAttribute('id','fee');
+    				div.appendChild(node);
+    				
+    				node = document.createElement('BR');
+    				div.appendChild(node);
+    				
+    				node = document.createElement('BUTTON');
+    				node.setAttribute('id','save');
+    				text = document.createTextNode('Save');
+    				node.appendChild(text);
+    				div.appendChild(node);
+    				
+    				disp.appendChild(div);
+    				saveBtn = document.getElementById('save');
+    				saveBtn.onclick = function(){
+    					let name = document.getElementById('cName').value;
+    					let fee = document.getElementById('fee').value;
+    					request.open('POST',url+'/courses/'+name+'/'+fee);
+    					request.onload = function(){
+    						disp.innerHTML = 'saved!';
+    					}
+    					request.send();
+    				}
+    			}
+    		}else if(option === 'View students list'){
+    			btn.onclick = function(){    				
+	    			if(cid === -1){
+	    				node = document.createElement('DIV');
+	    				text = document.createTextNode('course id missing');
+	    				node.appendChild(text);
+	    				disp.appendChild(node);
+	    			}else{
+	    				
+	    				request.open('GET',url + '/students/' + cid + '?param:courseid');
+						request.onload = function(){
+							displayStudents(request.response);
+						}
+						request.send();
+	    			}
+    			}
+    		}else if(option === 'View project details'){
+    			btn.onclick = function(){
+    				request.open('GET',url + '/projects/' + cid);
+    				request.onload = function(){
+    					displayProjects(request.response);
+    				}
+    				request.send();
+    			}
+    		}else if(option === 'update marks'){
+    			
+    			btn.onclick = function(){
+    				
+    				request.open('GET',url + '/students/' + cid + '?param:courseid');
+    				request.onload = function(){
+    					
+    					let div = document.createElement('DIV');
+    					let students = JSON.parse(request.response);
+    					for(let stud of students){
+    						disp.innerHTML = '';
+    						
+    						node = document.createElement('P');
+    						text = document.createTextNode(stud.name);
+    						node.appendChild(text);
+    						div.appendChild(node);
+    						
+    						node = document.createElement('INPUT');
+    						node.setAttribute('type','number');
+    						node.setAttribute('id','marks');
+    						div.appendChild(node);
+    						
+    						node = document.createElement('INPUT');
+    						node.setAttribute('type','hidden');
+    						node.setAttribute('value',stud.id);
+    						div.appendChild(node);   						
+    					}
+    					node = document.createElement('BUTTON');
+						node.setAttribute('id','update');
+						text = document.createTextNode('update');
+						node.appendChild(text);
+						div.appendChild(node);
+						
+						disp.appendChild(div);
+						let upBtn = document.getElementById('update');
+						upBtn.onclick = function(){
+							//let ids = document.querySelectorAll('p');
+							let inputs = document.querySelectorAll('input');
+							for(let iter = 0;iter < inputs.length;iter+=2){
+								let anotherReq = new XMLHttpRequest();
+								anotherReq.open('PUT',url + '/staffs/' + inputs[iter].value + '/' + inputs[iter + 1].value + '/' + cid);
+								anotherReq.onload = function(){
+									disp.innerHTML = 'update!';
+								}
+								anotherReq.send();
+							}
+						}
+    					
+    				}
+    				request.send();
+    				
+    			}
+    			
+    		}else if(option === 'add project'){
+    		
+    			btn.onclick = function(){
+    				disp.innerHTML = '';
+    				
+    				let dNode = document.createElement('DIV');
+    				node = document.createElement('P');
+    				text = document.createTextNode('Project title');
+    				node.appendChild(text);
+    				dNode.appendChild(node);
+    				
+    				node = document.createElement('INPUT');
+    				node.setAttribute('type','text');
+    				node.setAttribute('id','title');
+    				node.required = true;
+    				dNode.appendChild(node);
+    				
+    				node = document.createElement('BUTTON');
+    				node.setAttribute('id','add');
+    				text = document.createTextNode('Add');
+    				node.appendChild(text);
+    				dNode.appendChild(node);
+    				
+    				disp.appendChild(dNode);
+    				
+    				addBtn = document.getElementById('add');
+    				addBtn.onclick = function(){
+    					let title = document.getElementById('title').value;
+    					request.open('POST',url + '/projects/'+title+'/'+sid);
+    					request.onload = function(){
+    						disp.innerHTML = 'Project added!';
+    					}
+    					request.send();
+    				}
+    				
+    			}
+    		}else if(option === 'join existing project'){
+    			
+				btn.onclick = function(){
+					disp.innerHTML = '';
+					request.open('GET',url + '/projects');
+					request.onload = function(){
+						let div = document.createElement('DIV');
+						node = document.createElement('P');
+						text = document.createTextNode('Projects');
+						node.appendChild(text);
+						div.appendChild(node);
+						
+						node = document.createElement('SELECT');
+						node.setAttribute('id','project');
+						div.appendChild(node);
+						
+						let opNode;
+						let projects = JSON.parse(request.response);
+						for(let proj of projects){
+							
+							opNode = document.createElement('OPTION');
+		        			opNode.setAttribute('value',proj.id);
+		        			text = document.createTextNode(proj.title);
+		        			opNode.appendChild(text);
+		        			node.appendChild(opNode);
+							
+						}
+						div.appendChild(node);
+						
+						node = document.createElement('BUTTON');
+						node.setAttribute('id','join');
+						text = document.createTextNode('Join');
+						node.appendChild(text);
+						div.appendChild(node);
+						
+						disp.appendChild(div);
+						
+						let joinBtn = document.getElementById('join');
+						joinBtn.onclick = function(){
+							pid = document.getElementById('project').value;
+							let anotherReq = new XMLHttpRequest();
+							anotherReq.open('PUT',url + '/projects/' + sid + '/' + pid);
+							anotherReq.onload = function(){
+								disp.innerHTML = 'joined!';
+							}
+							anotherReq.send();
+						}
+					}
+					request.send();
+    			}
+    			
+    		}else if(option === 'select course'){
+				btn.onclick = function(){
+					disp.innerHTML = '';
+					request.open('GET',url + '/courses/' + sid);
+					request.onload = function(){
+						
+						let div = document.createElement('DIV');
+						node = document.createElement('P');
+						text = document.createTextNode('Courses');
+						node.appendChild(text);
+						div.appendChild(node);
+						
+						node = document.createElement('SELECT');
+						node.setAttribute('id','course');
+						div.appendChild(node);
+						
+						let opNode;
+						let courses = JSON.parse(request.response);
+						for(let course of courses){
+							
+							opNode = document.createElement('OPTION');
+		        			opNode.setAttribute('value',course.courseId);
+		        			text = document.createTextNode(course.courseName);
+		        			opNode.appendChild(text);
+		        			node.appendChild(opNode);
+							
+						}
+						div.appendChild(node);
+						
+						node = document.createElement('BUTTON');
+						node.setAttribute('id','add');
+						text = document.createTextNode('Add course');
+						node.appendChild(text);
+						div.appendChild(node);
+						
+						disp.appendChild(div);
+						
+						let joinBtn = document.getElementById('add');
+						joinBtn.onclick = function(){
+							cid = document.getElementById('course').value;
+							let anotherReq = new XMLHttpRequest();
+							anotherReq.open('POST',url + '/courses/' + sid + '/' + cid + '?param=student');
+							anotherReq.onload = function(){
+								disp.innerHTML = 'added!';
+							}
+							anotherReq.send();
+						}
+						
+					}
+					request.send();
+    			}
+    		}else if(option === 'view score card'){
+				btn.onclick = function(){
+					disp.innerHTML = '';
+					request.open('GET',url + '/students/' + sid + '?param=student');
+					request.onload = function(){
+						
+						scoreCard(request.response);
+						
+					}
+					request.send();
+    			}
+    		}else if(option === 'logout'){
+    			btn.onclick = function(){
+    				sid = -1;
+    				pid = -1;
+    				cid = -1;
+    				disp.innerHTML = '';
+    				divBlock.innerHTML = '';
+    				
+    				node = document.createElement('P');
+    				text = document.createTextNode('User id');
+    				node.appendChild(text);
+    				divBlock.appendChild(node);
+    				
+    				node = document.createElement('BR');
+    				divBlock.appendChild(node);
+    				
+    				node = document.createElement('INPUT');
+    				node.setAttribute('type','number');
+    				divBlock.appendChild(node);
+    				
+    				node = document.createElement('BR');
+    				divBlock.appendChild(node);
+    				
+    				node = document.createElement('BUTTON');
+    				text = document.createTextNode('login');
+    				node.appendChild(text);
+    				divBlock.appendChild(node);
+    				
+    				loginBtn = document.querySelector('button');
+    				loginBtn.onclick = function(){
+    					login();
+    				}
+    			}
+    		}
+    	}
+    	
+    	
+    	function createButtons(menu){
+    		for(let m of menu){
+				if(typeof m.option === 'undefined'){
+					if(typeof m.id !== 'undefined')
+						sid = m.id;
+					if(typeof m.pid !== 'undefined')
+						pid = m.pid;
+					else if(typeof m.courseid !== 'undefined')
+						cid = m.courseid;
+					console.log(sid+' '+pid+' '+cid);
+					continue;
+				}
+				label = document.createElement('BUTTON');
+				label.setAttribute('id',m.option);
+				text = document.createTextNode(m.option);
+				label.appendChild(text);
+				divBlock.appendChild(label);
+				
+				label = document.createElement('BR');
+				divBlock.appendChild(label);
+			}
+    	}
+    	
+    	function displayStaffs(resp){
+    		disp.innerHTML = '';
+    		var table = document.createElement('TABLE');
+			var row = document.createElement('TR');
+			
+			var cell = document.createElement('TH');
+			var text = document.createTextNode('Id');			
+			cell.appendChild(text);
+			row.appendChild(cell);
+			
+			cell = document.createElement('TH');
+			text = document.createTextNode('Name');			
+			cell.appendChild(text);
+			row.appendChild(cell);
+			
+			cell = document.createElement('TH');
+			text = document.createTextNode('Department');			
+			cell.appendChild(text);
+			row.appendChild(cell);
+			
+			cell = document.createElement('TH');
+			text = document.createTextNode('Course handled');			
+			cell.appendChild(text);
+			row.appendChild(cell);
+			
+			table.appendChild(row);
+			var staffs = JSON.parse(resp);
+			for(var staff of staffs){
+				
+				row = document.createElement('TR')
+				
+				cell = document.createElement('TD');
+				text = document.createTextNode(staff.id);			
+				cell.appendChild(text);
+				row.appendChild(cell);
+				
+				cell = document.createElement('TD');
+				text = document.createTextNode(staff.name);			
+				cell.appendChild(text);
+				row.appendChild(cell);
+				
+				cell = document.createElement('TD');
+				text = document.createTextNode(staff.department);			
+				cell.appendChild(text);
+				row.appendChild(cell);
+				
+				cell = document.createElement('TD');
+				text = document.createTextNode(staff.course);			
+				cell.appendChild(text);
+				row.appendChild(cell);
+				
+				table.appendChild(row);
+				console.log('constructing staff table...');
+			}
+			disp.appendChild(table);
+    	}
+    	
+    	function displayProjects(resp){
+    	
+    		disp.innerHTML = '';
+			var table = document.createElement('TABLE');
+			var row = document.createElement('TR');
+			
+			var cell = document.createElement('TH');
+			var text = document.createTextNode('Id');			
+			cell.appendChild(text);
+			row.appendChild(cell);
+			
+			cell = document.createElement('TH');
+			text = document.createTextNode('id');			
+			cell.appendChild(text);
+			row.appendChild(cell);
+			
+			cell = document.createElement('TH');
+			text = document.createTextNode('Project title');			
+			cell.appendChild(text);
+			row.appendChild(cell);
+			
+			cell = document.createElement('TH');
+			text = document.createTextNode('Status');			
+			cell.appendChild(text);
+			row.appendChild(cell);
+			
+			table.appendChild(row);
+			
+			var projs = JSON.parse(resp);
+			for(var proj of projs){
+				
+				row = document.createElement('TR')
+				
+				cell = document.createElement('TD');
+				text = document.createTextNode(proj.id);			
+				cell.appendChild(text);
+				row.appendChild(cell);
+				
+				cell = document.createElement('TD');
+				text = document.createTextNode(proj.title);			
+				cell.appendChild(text);
+				row.appendChild(cell);
+				
+				cell = document.createElement('TD');
+				text = document.createTextNode(proj.status);			
+				cell.appendChild(text);
+				row.appendChild(cell);
+				
+				table.appendChild(row);
+				console.log('constructing student table...');
+			}
+			disp.appendChild(table);
+    		
+    	}
+    	
+    	function scoreCard(resp){
+    		
+    		disp.innerHTML = '';
+			var table = document.createElement('TABLE');
+			var row = document.createElement('TR');
+			
+			var cell = document.createElement('TH');
+			var text = document.createTextNode('Subject');			
+			cell.appendChild(text);
+			row.appendChild(cell);
+			
+			cell = document.createElement('TH');
+			text = document.createTextNode('Marks');			
+			cell.appendChild(text);
+			row.appendChild(cell);
+			
+			table.appendChild(row);
+			
+			var score = JSON.parse(resp);
+			for(var s of score){
+				
+				row = document.createElement('TR')
+				
+				cell = document.createElement('TD');
+				text = document.createTextNode(s.subject);			
+				cell.appendChild(text);
+				row.appendChild(cell);
+				
+				cell = document.createElement('TD');
+				text = document.createTextNode(s.marks);			
+				cell.appendChild(text);
+				row.appendChild(cell);
+								
+				table.appendChild(row);
+				console.log('constructing student table...');
+			}
+			disp.appendChild(table);
+    		
+    	}
+    	
+    	function displayStudents(resp){
+
+    		disp.innerHTML = '';
+			var table = document.createElement('TABLE');
+			var row = document.createElement('TR');
+			
+			var cell = document.createElement('TH');
+			var text = document.createTextNode('Id');			
+			cell.appendChild(text);
+			row.appendChild(cell);
+			
+			cell = document.createElement('TH');
+			text = document.createTextNode('Name');			
+			cell.appendChild(text);
+			row.appendChild(cell);
+			
+			cell = document.createElement('TH');
+			text = document.createTextNode('Department');			
+			cell.appendChild(text);
+			row.appendChild(cell);
+			
+			cell = document.createElement('TH');
+			text = document.createTextNode('Project title');			
+			cell.appendChild(text);
+			row.appendChild(cell);
+			
+			table.appendChild(row);
+			
+			var students = JSON.parse(resp);
+			for(var stud of students){
+				
+				row = document.createElement('TR')
+				
+				cell = document.createElement('TD');
+				text = document.createTextNode(stud.id);			
+				cell.appendChild(text);
+				row.appendChild(cell);
+				
+				cell = document.createElement('TD');
+				text = document.createTextNode(stud.name);			
+				cell.appendChild(text);
+				row.appendChild(cell);
+				
+				cell = document.createElement('TD');
+				text = document.createTextNode(stud.department);			
+				cell.appendChild(text);
+				row.appendChild(cell);
+				
+				cell = document.createElement('TD');
+				text = document.createTextNode(stud.title);			
+				cell.appendChild(text);
+				row.appendChild(cell);
+				
+				table.appendChild(row);
+				console.log('constructing student table...');
+			}
+			disp.appendChild(table);
+    	}
+    
+    </script>
+</body>
+</html>
